@@ -4,31 +4,66 @@ var canvas;
 var width;
 var height;
 var protectedHeight;
+var engine;
 
 window.addEventListener('load', function() {
-	canvas = document.getElementById("scratch");
+
+	var Engine = Matter.Engine,
+    Render = Matter.Render,
+    World = Matter.World,
+    Bodies = Matter.Bodies;
+
+	// create an engine
+	engine = Engine.create();
+
+	// create a renderer
+	var render = Render.create({
+		element: document.getElementById("mat"),
+		engine: engine
+	});
+
+	canvas = render.canvas;
 	if ( ! canvas || ! canvas.getContext ) {
 		return false;
 	}
-	width = parseInt(canvas.style.width);
-	height = parseInt(canvas.style.height);
+	var canvasRect = canvas.getBoundingClientRect();
+	width = canvasRect.width;
+	height = canvasRect.height;
 	protectedHeight = height * 0.75;
 
-	init();
-	draw();
+	// create two boxes and a ground
+	var boxA = Bodies.rectangle(400, 200, 80, 80);
+	var paddles = [Bodies.rectangle(450, 50, 80, 20, { isStatic: true })];
+	var balls = [0,1,2].map(function(i){return Bodies.circle(300 + 50 * i, 300, 10)});
+	var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+	var leftWall = Bodies.rectangle(-100, height / 2, 220, height, { isStatic: true });
+	var rightWall = Bodies.rectangle(width + 100, height / 2, 220, height, { isStatic: true });
+
+	// add all of the bodies to the world
+	World.add(engine.world, [boxA, ...paddles, ...balls, ground, leftWall, rightWall]);
 
 	window.addEventListener("mousemove", function(evt){
-		var rect = canvas.getBoundingClientRect();
+		var rect = render.canvas.getBoundingClientRect();
 		var pos = [
-			Math.max(0, Math.min(width-1, evt.clientX - rect.left)),
-			Math.max(protectedHeight, Math.min(height-1, evt.clientY - rect.top)),
+			Math.max(0, Math.min(rect.width-1, evt.clientX - rect.left)),
+			Math.max(protectedHeight, Math.min(rect.height-1, evt.clientY - rect.top)),
 		];
-		paddles[0].velo = paddles[0].pos.map(function(v, i){return pos[i] - v})
-		paddles[0].pos = pos;
+		// paddles[0].velo = paddles[0].pos.map(function(v, i){return pos[i] - v})
+		var newVelocity = {x: pos[0] - paddles[0].position.x, y: pos[1] - paddles[0].position.y};
+		Matter.Body.setVelocity(paddles[0], newVelocity);
+		Matter.Body.setPosition(paddles[0], {x: pos[0], y: pos[1]});
+		var debug = document.getElementById("debug");
+		if(debug)
+			debug.innerHTML = "velo: " + newVelocity.x + "," + newVelocity.y;
 	});
 
-	// Animate (framerate could be subject to discuss)
-	window.setInterval(timerProc, 50);
+	init();
+
+	// run the engine
+	Engine.run(engine);
+
+	// run the renderer
+	Render.run(render);
 });
 
 var balls = [];
@@ -46,26 +81,31 @@ var blockColumns = 5;
 var ballRadius = 5;
 
 function init(){
-	paddles.push({name: "A", pos: [width / 2, 300], velo: [0. ,0.], balls: [], cooldown: 10});
+	// paddles.push({name: "A", pos: [width / 2, 300], velo: [0. ,0.], balls: [], cooldown: 10});
 
 	for(var iy = 0; iy < blockRows; iy++){
 		for(var ix = 0; ix < blockColumns; ix++){
-			blocks.push({
-				pos: [(ix + 0.5 - blockColumns / 2) * blockWidth + width / 2, iy * blockHeight + 100],
-				health: 3,
-				color: "rgb(" + (Math.random() * 127) + ", " + (Math.random() * 127) + ", " + (Math.random() * 127) + ")"
-			});
+			var body = Matter.Bodies.rectangle(
+				(ix - blockColumns / 2) * blockWidth + width / 2,
+				iy * blockHeight + 100,
+				blockWidth,
+				blockHeight,
+				{ isStatic: true}
+				// color: "rgb(" + (Math.random() * 127) + ", " + (Math.random() * 127) + ", " + (Math.random() * 127) + ")"
+			);
+			Matter.World.add(engine.world, body);
+			blocks.push(body);
 		}
 	}
 
-	for(var i = 0; i < 1; i++){
-		var target = paddles[Math.floor(Math.random() * paddles.length)];
-		balls.push({
-			pos: [target.pos[0], target.pos[1] + Math.random() * 200],
-			velo: [0, -15 * Math.random()],
-			color: "rgb(" + (Math.random() * 255) + ", " + (Math.random() * 255) + ", " + (Math.random() * 255) + ")"
-		});
-	}
+	// for(var i = 0; i < 1; i++){
+	// 	var target = paddles[Math.floor(Math.random() * paddles.length)];
+	// 	balls.push({
+	// 		pos: [target.pos[0], target.pos[1] + Math.random() * 200],
+	// 		velo: [0, -15 * Math.random()],
+	// 		color: "rgb(" + (Math.random() * 255) + ", " + (Math.random() * 255) + ", " + (Math.random() * 255) + ")"
+	// 	});
+	// }
 }
 
 
