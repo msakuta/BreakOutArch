@@ -5,6 +5,7 @@ var width;
 var height;
 var protectedHeight;
 var engine;
+var render;
 
 var balls = [];
 var blocks = [];
@@ -21,16 +22,14 @@ var paddleCategory = Matter.Body.nextCategory();
 window.addEventListener('load', function() {
 
 	var Engine = Matter.Engine,
-    Render = Matter.Render,
-    World = Matter.World,
-    Bodies = Matter.Bodies;
+		Render = Matter.Render;
 
 	// create an engine
 	engine = Engine.create();
 	engine.world.gravity = {x: 0., y: 0.2};
 
 	// create a renderer
-	var render = Render.create({
+	render = Render.create({
 		element: document.getElementById("mat"),
 		engine: engine,
 		options: {
@@ -47,12 +46,38 @@ window.addEventListener('load', function() {
 	if ( ! canvas || ! canvas.getContext ) {
 		return false;
 	}
+
+	init();
+
+	// run the engine
+	Engine.run(engine);
+
+	// run the renderer
+	Render.run(render);
+});
+
+var paddleWidth = 60;
+var paddleHeight = 20;
+
+var blockWidth = 70;
+var blockHeight = 20;
+var blockRows = 3;
+var blockColumns = 7;
+
+var ballRadius = 10;
+
+function init(){
+
+	var World = Matter.World,
+		Bodies = Matter.Bodies;
+
 	var canvasRect = canvas.getBoundingClientRect();
 	width = canvasRect.width;
 	height = canvasRect.height;
 	protectedHeight = height * 0.75;
 
-	var paddles = [Bodies.rectangle(width / 2, height * 3 / 4, 80, 20, {
+	// paddles.push({name: "A", pos: [width / 2, 300], velo: [0. ,0.], balls: [], cooldown: 10});
+	paddles = [Bodies.rectangle(width / 2, height * 3 / 4, 80, 20, {
 		density: 0.001,
 		frictionAir: 1.8,
 		collisionFilter: {
@@ -61,13 +86,13 @@ window.addEventListener('load', function() {
 		}
 	})];
 	paddles[0].restitution = 1.;
-	balls = [0].map(function(i){return Bodies.circle(300 + 50 * i, 300, 10, {
+	balls = [Bodies.circle(width / 2, height / 2, ballRadius, {
 		frictionAir: 0.,
 		collisionFilter: {
 			category: ballCategory,
 			mask: ballCategory | paddleCategory | wallCategory
 		}
-	})});
+	})];
 	var ground = Bodies.rectangle(width / 2, height + 50, width, 150, {
 		isStatic: true,
 		collisionFilter: {
@@ -161,28 +186,6 @@ window.addEventListener('load', function() {
 		];
 		Matter.Body.setPosition(mouseProxy, {x: pos[0], y: pos[1]});
 	});
-
-	init();
-
-	// run the engine
-	Engine.run(engine);
-
-	// run the renderer
-	Render.run(render);
-});
-
-var paddleWidth = 60;
-var paddleHeight = 20;
-
-var blockWidth = 70;
-var blockHeight = 20;
-var blockRows = 3;
-var blockColumns = 7;
-
-var ballRadius = 5;
-
-function init(){
-	// paddles.push({name: "A", pos: [width / 2, 300], velo: [0. ,0.], balls: [], cooldown: 10});
 
 	function initBlocks(){
 		for(var iy = 0; iy < blockRows; iy++){
