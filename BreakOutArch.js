@@ -128,7 +128,8 @@ function init(){
 	})
 
 	// add all of the bodies to the world
-	World.add(engine.world, [...paddles, ...balls, ground, roof, leftWall, rightWall, mouseProxy]);
+	World.add(engine.world, paddles
+		.concat(balls).concat([ground, roof, leftWall, rightWall, mouseProxy]));
 
 	var mouse = Matter.Mouse.create(render.canvas);
 	console.log(mouse)
