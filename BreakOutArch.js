@@ -37,6 +37,7 @@ window.addEventListener('load', function() {
 			height: 600,
 			wireframes: false,
 			showDebug: true,
+			showConvexHull: true,
 			// showVelocity: true,
 			// showCollisions: true,
 		}
@@ -77,15 +78,23 @@ function init(){
 	protectedHeight = height * 0.75;
 
 	// paddles.push({name: "A", pos: [width / 2, 300], velo: [0. ,0.], balls: [], cooldown: 10});
-	paddles = [Bodies.rectangle(width / 2, height * 3 / 4, 80, 20, {
+	var paddleBar = Bodies.rectangle(0, 0, paddleWidth - paddleHeight / 4, paddleHeight);
+	var paddle = Matter.Body.create({
 		density: 0.001,
 		frictionAir: 1.8,
 		collisionFilter: {
 			category: paddleCategory,
-			mask: groundCategory | wallCategory | paddleCategory | ballCategory,
-		}
-	})];
-	paddles[0].restitution = 1.;
+			mask: wallCategory | paddleCategory | ballCategory,
+		},
+		parts: [
+			paddleBar,
+			Bodies.circle(paddleWidth / 2, 0, paddleHeight / 2, {render: paddleBar.render}),
+			Bodies.circle(-paddleWidth / 2, 0, paddleHeight / 2, {render: paddleBar.render}),
+		]
+	});
+	Matter.Body.setPosition(paddle, {x: width / 2, y: height * 3 / 4});
+	paddle.restitution = 1.;
+	paddles = [paddle];
 	balls = [Bodies.circle(width / 2, height / 2, ballRadius, {
 		frictionAir: 0.,
 		collisionFilter: {
